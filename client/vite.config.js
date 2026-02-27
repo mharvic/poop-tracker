@@ -6,7 +6,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      "/api": "http://localhost:3000",
-    },
-  },
+      '/api': {
+        target: 'https://localhost:3443',
+        changeOrigin: true,
+        secure: false // try adding this to bypass the self signed certificate // Note: I keep having an 500 error.
+      }
+    }
+  }
 })

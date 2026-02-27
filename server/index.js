@@ -34,11 +34,19 @@ const express = require('express');
 const https = require('https');
 const fs = require('fs');
 const http = require('http');
-const hsts = require('hsts');
+const helmet = require('helmet');
 
 const app = express();
-const PORT_HTTP = 3000; // Port for HTTP
-const PORT_HTTPS = 3443; // Port for HTTPS
+const PORT_HTTP = 3000; 
+const PORT_HTTPS = 3443;
+
+app.use(helmet({
+    hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true
+    }
+}));
 
 // Sample route for HTTP
 app.get('/', (req, res) => {
@@ -50,17 +58,16 @@ app.get('/secure', (req, res) => {
     res.send('Hello from HTTPS!');
 });
 
-// Apply HSTS middleware to the HTTPS server
-const hstsOptions = {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true
-};
+//test route
+app.get('/api/hello', (req, res) => {
+    res.json({ message: "Hello from the secure Express backend!" });
+});
 
 // Create HTTP server
 http.createServer(app).listen(PORT_HTTP, () => {
     console.log(`HTTP Server running at http://localhost:${PORT_HTTP}`);
 });
+
 
 // Create HTTPS server with SSL certificate
 const options = {
@@ -68,15 +75,6 @@ const options = {
     cert: fs.readFileSync('certificate.pem'),
 };
 
-// Create HTTPS server
-const httpsServer = https.createServer(options, (req, res) => {
-    // Apply HSTS middleware
-    hsts(hstsOptions)(req, res, () => {
-        app(req, res);
-    });
-});
-
-// Start HTTPS server
-httpsServer.listen(PORT_HTTPS, () => {
+https.createServer(options, app).listen(PORT_HTTPS, () => {
     console.log(`HTTPS Server running at https://localhost:${PORT_HTTPS}`);
 });
